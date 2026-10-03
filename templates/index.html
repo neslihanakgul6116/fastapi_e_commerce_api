@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>E-Ticaret Mağazası</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <!-- Navbar / Header -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          
+          <!-- Logo -->
+          <div class="flex items-center">
+            <a href="/" class="text-2xl font-bold text-indigo-600">🛒 E-Ticaret</a>
+          </div>
+
+          <!-- Arama Çubuğu (Search Bar) -->
+          <div class="hidden md:flex flex-1 max-w-md mx-8">
+            <form action="/" method="GET" class="w-full flex">
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Ürün ara..." class="w-full px-4 py-2 border border-gray-300 rounded-l-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
+                <button type="submit" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 rounded-r-xl text-sm font-semibold transition">Ara</button>
+            </form>
+          </div>
+
+          <!-- Masaüstü Linkler ve Butonlar -->
+          <div class="hidden md:flex items-center space-x-6">
+            <a href="/" class="text-gray-700 hover:text-indigo-600 font-medium">Ana Sayfa</a>
+            <a href="/elektronik" class="text-gray-700 hover:text-indigo-600 font-medium">Elektronik</a>
+            <a href="/giyim" class="text-gray-700 hover:text-indigo-600 font-medium">Giyim</a>
+            
+            <a href="/favorites" class="text-gray-700 hover:text-red-500 flex items-center space-x-1 font-medium">
+              <span>❤️</span>
+              <span>Favorilerim</span>
+            </a>
+
+            <a href="/cart-page" class="relative bg-indigo-50 hover:bg-indigo-100 text-indigo-700 px-3 py-2 rounded-lg flex items-center space-x-2 font-medium transition">
+              <span class="text-xl">🛒</span>
+              <span>Sepet</span>
+              <span id="cart-badge" class="bg-indigo-600 text-white text-xs px-2 py-0.5 rounded-full">0</span>
+            </a>
+          </div>
+
+          <!-- Mobil Hamburger Butonu -->
+          <div class="flex items-center md:hidden">
+            <button id="menu-btn" class="text-gray-700 hover:text-indigo-600 focus:outline-none text-2xl">
+              ☰
+            </button>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Mobil Açılır Menü ve Arama -->
+      <div id="mobile-menu" class="hidden md:hidden bg-white border-t border-gray-100 px-4 pt-3 pb-4 space-y-3">
+        <form action="/" method="GET" class="flex">
+            <input type="text" name="q" value="{{ search_query }}" placeholder="Ürün ara..." class="w-full px-3 py-1.5 border border-gray-300 rounded-l-lg text-sm">
+            <button type="submit" class="bg-indigo-600 text-white px-3 rounded-r-lg text-sm">Ara</button>
+        </form>
+        <a href="/" class="block text-gray-700 font-medium py-1">Ana Sayfa</a>
+        <a href="/elektronik" class="block text-gray-700 font-medium py-1">Elektronik</a>
+        <a href="/giyim" class="block text-gray-700 font-medium py-1">Giyim</a>
+        <a href="/ev-yasam" class="block text-gray-700 font-medium py-1">Ev & Yaşam</a>
+        <a href="/aksesuar" class="block text-gray-700 font-medium py-1">Aksesuar</a>
+        <hr>
+        <a href="/favorites" class="block text-gray-700 font-medium py-1">❤️ Favorilerim</a>
+        <a href="/cart-page" class="block text-indigo-600 font-medium py-1">🛒 Sepetim</a>
+      </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Banner Alanı -->
+        {% if banner and not search_query %}
+        <div class="w-full rounded-2xl p-8 text-white flex flex-col md:flex-row justify-between items-center mb-8 shadow-lg" style="background: {{ banner.bg_color }};">
+            <div class="mb-4 md:mb-0 max-w-lg">
+                <h1 class="text-2xl md:text-3xl font-bold mb-2">{{ banner.title }}</h1>
+                <p class="text-sm md:text-base opacity-90">{{ banner.subtitle }}</p>
+            </div>
+            {% if banner.image_url %}
+            <img src="{{ banner.image_url }}" alt="Banner" class="w-48 h-32 object-cover rounded-xl shadow-md">
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Arama Sonucu Bilgisi -->
+        {% if search_query %}
+        <div class="mb-6">
+            <h2 class="text-xl font-bold text-gray-800">"{{ search_query }}" için arama sonuçları</h2>
+            <a href="/" class="text-sm text-indigo-600 hover:underline">← Tüm ürünlere geri dön</a>
+        </div>
+        {% endif %}
+
+        <!-- Kategori Filtre Butonları -->
+        <div class="flex gap-2 overflow-x-auto pb-3 mb-6">
+            <a href="/" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition {% if not selected_category and not search_query %}bg-indigo-600 text-white shadow{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-100{% endif %}">Tümü</a>
+            <a href="/elektronik" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition {% if selected_category == 'elektronik' %}bg-indigo-600 text-white shadow{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-100{% endif %}">Elektronik</a>
+            <a href="/giyim" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition {% if selected_category == 'giyim' %}bg-indigo-600 text-white shadow{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-100{% endif %}">Giyim & Moda</a>
+            <a href="/ev-yasam" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition {% if selected_category == 'ev-yasam' %}bg-indigo-600 text-white shadow{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-100{% endif %}">Ev & Yaşam</a>
+            <a href="/aksesuar" class="px-4 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition {% if selected_category == 'aksesuar' %}bg-indigo-600 text-white shadow{% else %}bg-white text-gray-700 border border-gray-200 hover:bg-gray-100{% endif %}">Aksesuar</a>
+        </div>
+
+        <!-- Ürünler Listesi (Grid) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {% for product in products %}
+            <div class="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm hover:shadow-md transition flex flex-col justify-between">
+                <div>
+                    <!-- Ürün detay sayfasına yönlendiren görsel ve başlık linki -->
+                    <a href="/product/{{ product.id }}">
+                        <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-48 object-cover rounded-xl mb-3 hover:opacity-95 transition">
+                        <h3 class="font-bold text-gray-900 text-base mb-1 hover:text-indigo-600 transition">{{ product.name }}</h3>
+                    </a>
+                    <p class="text-gray-500 text-xs line-clamp-2 mb-4">{{ product.description }}</p>
+                </div>
+                <div class="flex justify-between items-center mt-2">
+                    <span class="text-lg font-bold text-emerald-600">{{ product.price }} TL</span>
+                    <button onclick="addToCart({{ product.id }})" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-3.5 py-2 rounded-xl transition">Sepete Ekle</button>
+                </div>
+            </div>
+            {% else %}
+            <div class="col-span-full text-center py-12 text-gray-500">
+                Aradığınız kriterlere uygun ürün bulunamadı.
+            </div>
+            {% endfor %}
+        </div>
+
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        const menuBtn = document.getElementById('menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+        if (menuBtn && mobileMenu) {
+            menuBtn.addEventListener('click', () => mobileMenu.classList.toggle('hidden'));
+        }
+
+        fetch('/api/cart-count')
+            .then(res => res.json())
+            .then(data => {
+                const badge = document.getElementById('cart-badge');
+                if (badge) badge.innerText = data.count;
+            });
+
+        function addToCart(productId) {
+            fetch(`/api/add-to-cart/${productId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert(data.message);
+                    const badge = document.getElementById('cart-badge');
+                    if (badge) badge.innerText = data.cart_count;
+                } else {
+                    alert("Ürün sepete eklenemedi!");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

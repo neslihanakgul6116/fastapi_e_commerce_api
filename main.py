@@ -1,50 +1,179 @@
-from fastapi import FastAPI ,HTTPException
-from pydantic import BaseModel
-app=FastAPI(title="E-Ticaret & Sepet API'si")
+from fastapi import FastAPI, Depends, Request, Query
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
+from sqlalchemy.orm import Session
 
-class Product(BaseModel):
-    id:int
-    name:str
-    price:float
-    stock:int=10
+from database import get_db
+from models import Product, Category
 
-class CartItem(BaseModel):
-    product_id:int
-    quantity:int=1
+app = FastAPI()
 
-urunler_db=[
-    Product(id=1, name="Kablosuz Kulaklık", price=1200.0, stock=15),
-    Product(id=2, name="Akıllı Saat", price=3500.0, stock=5),
-]
-sepet_db = []
+templates = Jinja2Templates(directory="templates")
 
-# --- 3. ENDPOINT'LER (ADRESLER) 📍 ---
+# Basit bellek tabanlı sepet listesi
+cart_items = []
 
-@app.get("/products", summary="Tüm Ürünleri Listele")
-def urunleri_getir():
-    return urunler_db
-
-@app.post("/products", summary="Yeni Ürün Ekle")
-def urun_ekle(product: Product):
-    urunler_db.append(product)
-    return {"mesaj": "Ürün başarıyla eklendi!", "urun": product}
-
-@app.post("/cart/add", summary="Sepete Ürün Ekle")
-def sepete_ekle(item: CartItem):
-    # Ürün veritabanında var mı kontrol edelim 🔍
-    urun = next((u for u in urunler_db if u.id == item.product_id), None)
-    if not urun:
-        raise HTTPException(status_code=404, detail="Ürün bulunamadı!")
+# --- Ana Sayfa ve Arama (Search) ---
+@app.get("/", response_class=HTMLResponse)
+def home(request: Request, q: str = None, db: Session = Depends(get_db)):
+    # Eğer arama kelimesi (q) varsa, ürün adında veya açıklamasında arama yap
+    if q:
+        products = db.query(Product).filter(Product.name.ilike(f"%{q}%")).all()
+    else:
+        products = db.query(Product).all()
     
-    sepet_db.append(item)
-    return {"mesaj": f"{urun.name} sepete eklendi!", "sepet": sepet_db}
+    return templates.TemplateResponse(request, "index.html", {
+        "request": request,
+        "products": products,
+        "selected_category": None,
+        "search_query": q or "",
+        "banner": {
+            "title": "Seçili Ürünlerde %50'ye Varan Fırsatlar!",
+            "subtitle": "Kaçırılmayacak indirimler seni bekliyor, hemen alışverişe başla.",
+            "bg_color": "linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%)",
+            "image_url": "https://images.unsplash.com/photo-1483985988355-763728e1935b?w=600&auto=format&fit=crop&q=80"
+        }
+    })
 
-@app.get("/cart", summary="Sepeti ve Toplam Tutarı Göster")
-def sepeti_getir():
-    toplam = 0.0
-    for item in sepet_db:
-        urun = next((u for u in urunler_db if u.id == item.product_id), None)
-        if urun:
-            toplam += urun.price * item.quantity
-            
-    return {"sepet_icerigi": sepet_db, "toplam_tutar": toplam}
+# --- Kategori Sayfaları ---
+@app.get("/elektronik", response_class=HTMLResponse)
+def elektronik_page(request: Request, db: Session = Depends(get_db)):
+    try:
+        products = db.query(Product).join(Category).filter(Category.slug == "elektronik").all()
+    except Exception:
+        products = []
+        
+    return templates.TemplateResponse(request, "index.html", {
+        "request": request,
+        "products": products,
+        "selected_category": "elektronik",
+        "search_query": "",
+        "banner": {
+            "title": "Teknolojide Büyük İndirim: %50'ye Varan Fırsatlar!",
+            "subtitle": "En yeni kulaklıklar, akıllı saatler ve elektronik aksesuarlar.",
+            "bg_color": "linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)",
+            "image_url": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=600&auto=format&fit=crop&q=80"
+        }
+    })
+
+@app.get("/giyim", response_class=HTMLResponse)
+def giyim_page(request: Request, db: Session = Depends(get_db)):
+    try:
+        products = db.query(Product).join(Category).filter(Category.slug == "giyim").all()
+    except Exception:
+        products = []
+        
+    return templates.TemplateResponse(request, "index.html", {
+        "request": request,
+        "products": products,
+        "selected_category": "giyim",
+        "search_query": "",
+        "banner": {
+            "title": "Sezonun Trend Modelleri Şimdi Satışta!",
+            "subtitle": "Tarzınızı yansıtacak oversize hoodie, etek, gömlek ve kombinler.",
+            "bg_color": "linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)",
+            "image_url": "https://images.unsplash.com/photo-1489987707025-afc232f7ea0f?w=600&auto=format&fit=crop&q=80"
+        }
+    })
+
+@app.get("/ev-yasam", response_class=HTMLResponse)
+def ev_yasam_page(request: Request, db: Session = Depends(get_db)):
+    try:
+        products = db.query(Product).join(Category).filter(Category.slug == "ev-yasam").all()
+    except Exception:
+        products = []
+        
+    return templates.TemplateResponse(request, "index.html", {
+        "request": request,
+        "products": products,
+        "selected_category": "ev-yasam",
+        "search_query": "",
+        "banner": {
+            "title": "Evinize Şıklık ve Konfor Katın",
+            "subtitle": "Akıllı termoslar, ev dekorasyonu ve yaşam ürünleri.",
+            "bg_color": "linear-gradient(135deg, #00b894 0%, #55efc4 100%)",
+            "image_url": "https://images.unsplash.com/photo-1513694203232-719a280e022f?w=600&auto=format&fit=crop&q=80"
+        }
+    })
+
+@app.get("/aksesuar", response_class=HTMLResponse)
+def aksesuar_page(request: Request, db: Session = Depends(get_db)):
+    try:
+        products = db.query(Product).join(Category).filter(Category.slug == "aksesuar").all()
+    except Exception:
+        products = []
+        
+    return templates.TemplateResponse(request, "index.html", {
+        "request": request,
+        "products": products,
+        "selected_category": "aksesuar",
+        "search_query": "",
+        "banner": {
+            "title": "Kombininizi Tamamlayacak Aksesuarlar",
+            "subtitle": "Minimalist çantalar, cüzdanlar ve şık detaylar.",
+            "bg_color": "linear-gradient(135deg, #f39c12 0%, #e67e22 100%)",
+            "image_url": "https://images.unsplash.com/photo-1523293182086-7651a899d37f?w=600&auto=format&fit=crop&q=80"
+        }
+    })
+
+# --- Ürün Detay Sayfası ---
+@app.get("/product/{product_id}", response_class=HTMLResponse)
+def product_detail(request: Request, product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        return HTMLResponse("Ürün bulunamadı", status_code=404)
+        
+    return templates.TemplateResponse(request, "product_detail.html", {
+        "request": request,
+        "product": product
+    })
+
+# --- Sepet API Rotaları ---
+@app.post("/api/add-to-cart/{product_id}")
+def add_to_cart(product_id: int, db: Session = Depends(get_db)):
+    product = db.query(Product).filter(Product.id == product_id).first()
+    if not product:
+        return {"success": False, "message": "Ürün bulunamadı"}
+    
+    cart_items.append({
+        "id": product.id,
+        "name": product.name,
+        "price": product.price,
+        "image_url": product.image_url
+    })
+    return {"success": True, "message": f"{product.name} sepete eklendi!", "cart_count": len(cart_items)}
+
+@app.get("/api/cart-count")
+def cart_count():
+    return {"count": len(cart_items)}
+
+# --- Favoriler ve Sepet Sayfaları ---
+@app.get("/favorites", response_class=HTMLResponse)
+def favorites_page(request: Request):
+    return templates.TemplateResponse(request, "favorites.html", {"request": request})
+
+@app.get("/cart-page", response_class=HTMLResponse)
+def cart_page(request: Request):
+    formatted_cart = []
+    for item in cart_items:
+        formatted_cart.append({
+            "product": {
+                "id": item["id"],
+                "name": item["name"],
+                "price": item["price"],
+                "image_url": item["image_url"]
+            },
+            "quantity": 1
+        })
+        
+    return templates.TemplateResponse(request, "cart.html", {
+        "request": request, 
+        "cart_items": formatted_cart
+    })
+
+@app.get("/checkout", response_class=HTMLResponse)
+def checkout_page(request: Request):
+    return templates.TemplateResponse(request, "checkout.html", {
+        "request": request,
+        "cart_items": cart_items
+    })

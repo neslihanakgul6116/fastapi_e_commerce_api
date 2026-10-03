@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ product.name }} - E-Ticaret</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+    <!-- Navbar -->
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+          <a href="/" class="text-2xl font-bold text-indigo-600">🛒 E-Ticaret</a>
+          <a href="/" class="text-sm font-semibold text-indigo-600 hover:underline">← Ana Sayfaya Dön</a>
+        </div>
+      </div>
+    </nav>
+
+    <!-- Ürün Detay İçeriği -->
+    <div class="max-w-5xl mx-auto px-4 py-12">
+        <div class="bg-white border border-gray-200 rounded-3xl p-6 md:p-10 shadow-sm grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+            
+            <!-- Ürün Görseli -->
+            <div>
+                <img src="{{ product.image_url }}" alt="{{ product.name }}" class="w-full h-96 object-cover rounded-2xl shadow-md">
+            </div>
+
+            <!-- Ürün Bilgileri -->
+            <div>
+                <span class="bg-indigo-50 text-indigo-600 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Ürün Detayı</span>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900 mt-3 mb-2">{{ product.name }}</h1>
+                <p class="text-2xl font-extrabold text-emerald-600 mb-4">{{ product.price }} TL</p>
+                <p class="text-gray-600 text-sm leading-relaxed mb-6">{{ product.description }}</p>
+
+                <div class="flex space-x-4">
+                    <button onclick="addToCart({{ product.id }})" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 px-6 rounded-xl transition shadow-lg text-center">
+                        Sepete Ekle
+                    </button>
+                    <a href="/cart-page" class="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-xl transition text-center">
+                        Sepete Git 🛒
+                    </a>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        function addToCart(productId) {
+            fetch(`/api/add-to-cart/${productId}`, { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+                if(data.success) {
+                    alert(data.message);
+                } else {
+                    alert("Ürün eklenemedi.");
+                }
+            });
+        }
+    </script>
+</body>
+</html>

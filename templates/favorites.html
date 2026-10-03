@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favorilerim - Mazaza</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-100 text-gray-800 pb-24" onload="loadFavorites()">
+
+    <!-- Üst Bar -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="container mx-auto px-4 py-3 flex items-center justify-between">
+            <a href="/" class="text-2xl font-black text-orange-500 tracking-wider">
+                m<span class="text-gray-800">aza</span>za
+            </a>
+            <h1 class="text-sm font-bold text-gray-700">Favorilerim</h1>
+            <a href="/" class="text-xs text-orange-500 font-semibold hover:underline">Alışverişe Devam Et</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-4 py-6 max-w-2xl">
+        <div id="favorites-container" class="space-y-4">
+            <!-- JavaScript ile favoriler buraya yüklenecek -->
+        </div>
+    </main>
+
+    <!-- Alt Menü (Mobil Uyumlu) -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg py-2 px-6 flex justify-around items-center z-50">
+        <a href="/" class="flex flex-col items-center text-gray-400 hover:text-orange-500 transition">
+            <i class="fa-solid fa-house text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Anasayfa</span>
+        </a>
+        <a href="/favorites" class="flex flex-col items-center text-orange-500">
+            <i class="fa-solid fa-heart text-lg"></i>
+            <span class="text-[10px] font-bold mt-0.5">Favoriler</span>
+        </a>
+        <a href="/cart-page" class="flex flex-col items-center text-gray-400 hover:text-orange-500 transition">
+            <i class="fa-solid fa-cart-shopping text-lg"></i>
+            <span class="text-[10px] font-medium mt-0.5">Sepetim</span>
+        </a>
+    </nav>
+
+    <script>
+        function loadFavorites() {
+            const container = document.getElementById('favorites-container');
+            const favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+
+            if (favorites.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-16 bg-white rounded-2xl shadow-sm border p-6">
+                        <i class="fa-solid fa-heart-crack text-5xl text-gray-300 mb-4"></i>
+                        <h2 class="text-base font-bold text-gray-700">Favori Listeniz Boş</h2>
+                        <p class="text-xs text-gray-400 mt-1 mb-6">Henüz beğendiğiniz bir ürünü favorilere eklemediniz.</p>
+                        <a href="/" class="bg-orange-500 text-white px-6 py-2.5 rounded-xl text-xs font-bold hover:bg-orange-600 transition">Alışverişe Başla</a>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = favorites.map(product => `
+                <div class="bg-white p-4 rounded-xl shadow-sm border flex items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <img src="${product.image_url}" class="w-16 h-16 object-cover rounded-lg border">
+                        <div>
+                            <h3 class="text-xs font-bold text-gray-800 line-clamp-1">${product.name}</h3>
+                            <span class="text-sm font-extrabold text-orange-500 mt-1 block">${product.price} ₺</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <button onclick="removeFavorite(${product.id})" class="text-red-500 p-2 hover:bg-red-50 rounded-lg transition" title="Favorilerden Çıkar">
+                            <i class="fa-solid fa-trash-can text-base"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function removeFavorite(id) {
+            let favorites = JSON.parse(localStorage.getItem('favorites')) || [];
+            favorites = favorites.filter(item => item.id !== id);
+            localStorage.setItem('favorites', JSON.stringify(favorites));
+            loadFavorites();
+        }
+    </script>
+</body>
+</html>
